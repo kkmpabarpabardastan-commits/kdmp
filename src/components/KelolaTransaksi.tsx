@@ -130,22 +130,20 @@ export function KelolaTransaksi() {
     };
 
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from('transactions').update(payload).eq('id', editing.id);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menyimpan perubahan.' });
-      } else {
+    try {
+      if (editing.id) {
+        const { error } = await supabase.from('transactions').update(payload).eq('id', editing.id);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Transaksi berhasil diperbarui.' });
         setEditing(null);
-      }
-    } else {
-      const { error } = await supabase.from('transactions').insert(payload);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menambah transaksi baru.' });
       } else {
+        const { error } = await supabase.from('transactions').insert(payload);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Transaksi baru berhasil ditambahkan.' });
         setEditing(null);
       }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menyimpan data transaksi.' });
     }
     setSaving(false);
     loadData();
@@ -154,13 +152,14 @@ export function KelolaTransaksi() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus transaksi ini?')) return;
-    const { error } = await supabase.from('transactions').delete().eq('id', id);
-    if (error) {
-      setMsg({ type: 'error', text: 'Gagal menghapus transaksi.' });
-    } else {
+    try {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) throw error;
       setMsg({ type: 'success', text: 'Transaksi berhasil dihapus.' });
       loadData();
       setTimeout(() => setMsg(null), 3000);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menghapus transaksi.' });
     }
   };
 

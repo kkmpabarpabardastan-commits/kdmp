@@ -45,8 +45,13 @@ export function KelolaAnggota() {
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    const { data } = await supabase.from('members').select('*').order('member_number');
-    setMembers(data ?? []);
+    try {
+      const { data, error } = await supabase.from('members').select('*').order('member_number');
+      if (error) throw error;
+      setMembers(data ?? []);
+    } catch {
+      setMembers([]);
+    }
     setLoading(false);
   }, []);
 
@@ -111,22 +116,21 @@ export function KelolaAnggota() {
     };
 
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from('members').update(payload).eq('id', editing.id);
-      if (error) {
-        setMsg({ type: 'error', text: error.code === '23505' ? 'Nomor anggota sudah digunakan.' : 'Gagal menyimpan perubahan.' });
-      } else {
+    try {
+      if (editing.id) {
+        const { error } = await supabase.from('members').update(payload).eq('id', editing.id);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Data anggota berhasil diperbarui.' });
         setEditing(null);
-      }
-    } else {
-      const { error } = await supabase.from('members').insert(payload);
-      if (error) {
-        setMsg({ type: 'error', text: error.code === '23505' ? 'Nomor anggota sudah digunakan.' : 'Gagal menambah anggota baru.' });
       } else {
+        const { error } = await supabase.from('members').insert(payload);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Anggota baru berhasil ditambahkan.' });
         setEditing(null);
       }
+    } catch (err: any) {
+      const code = err?.code ?? '';
+      setMsg({ type: 'error', text: code === '23505' ? 'Nomor anggota sudah digunakan.' : (err?.message ?? 'Gagal menyimpan data anggota.') });
     }
     setSaving(false);
     loadData();
@@ -135,13 +139,14 @@ export function KelolaAnggota() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus anggota ini?')) return;
-    const { error } = await supabase.from('members').delete().eq('id', id);
-    if (error) {
-      setMsg({ type: 'error', text: 'Gagal menghapus anggota.' });
-    } else {
+    try {
+      const { error } = await supabase.from('members').delete().eq('id', id);
+      if (error) throw error;
       setMsg({ type: 'success', text: 'Anggota berhasil dihapus.' });
       loadData();
       setTimeout(() => setMsg(null), 3000);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menghapus anggota.' });
     }
   };
 

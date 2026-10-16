@@ -49,8 +49,13 @@ export function KelolaPemasok() {
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    const { data } = await supabase.from('suppliers').select('*').order('name');
-    setSuppliers(data ?? []);
+    try {
+      const { data, error } = await supabase.from('suppliers').select('*').order('name');
+      if (error) throw error;
+      setSuppliers(data ?? []);
+    } catch {
+      setSuppliers([]);
+    }
     setLoading(false);
   }, []);
 
@@ -104,22 +109,20 @@ export function KelolaPemasok() {
     };
 
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from('suppliers').update(payload).eq('id', editing.id);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menyimpan perubahan.' });
-      } else {
+    try {
+      if (editing.id) {
+        const { error } = await supabase.from('suppliers').update(payload).eq('id', editing.id);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Pemasok berhasil diperbarui.' });
         setEditing(null);
-      }
-    } else {
-      const { error } = await supabase.from('suppliers').insert(payload);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menambah pemasok baru.' });
       } else {
+        const { error } = await supabase.from('suppliers').insert(payload);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Pemasok baru berhasil ditambahkan.' });
         setEditing(null);
       }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menyimpan data pemasok.' });
     }
     setSaving(false);
     loadData();
@@ -128,13 +131,14 @@ export function KelolaPemasok() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus pemasok ini?')) return;
-    const { error } = await supabase.from('suppliers').delete().eq('id', id);
-    if (error) {
-      setMsg({ type: 'error', text: 'Gagal menghapus pemasok.' });
-    } else {
+    try {
+      const { error } = await supabase.from('suppliers').delete().eq('id', id);
+      if (error) throw error;
       setMsg({ type: 'success', text: 'Pemasok berhasil dihapus.' });
       loadData();
       setTimeout(() => setMsg(null), 3000);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menghapus pemasok.' });
     }
   };
 

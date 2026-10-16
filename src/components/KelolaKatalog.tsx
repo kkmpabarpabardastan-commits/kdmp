@@ -45,14 +45,20 @@ export function KelolaKatalog() {
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    const [prodRes, catRes, supRes] = await Promise.all([
-      supabase.from('products').select('*, category:categories(*), supplier:suppliers(*)').order('name'),
-      supabase.from('categories').select('*').order('name'),
-      supabase.from('suppliers').select('*').order('name'),
-    ]);
-    setProducts(prodRes.data ?? []);
-    setCategories(catRes.data ?? []);
-    setSuppliers(supRes.data ?? []);
+    try {
+      const [prodRes, catRes, supRes] = await Promise.all([
+        supabase.from('products').select('*, category:categories(*), supplier:suppliers(*)').order('name'),
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('suppliers').select('*').order('name'),
+      ]);
+      setProducts(prodRes.data ?? []);
+      setCategories(catRes.data ?? []);
+      setSuppliers(supRes.data ?? []);
+    } catch {
+      setProducts([]);
+      setCategories([]);
+      setSuppliers([]);
+    }
     setLoading(false);
   }, []);
 
@@ -111,22 +117,20 @@ export function KelolaKatalog() {
     };
 
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menyimpan perubahan.' });
-      } else {
+    try {
+      if (editing.id) {
+        const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Barang berhasil diperbarui.' });
         setEditing(null);
-      }
-    } else {
-      const { error } = await supabase.from('products').insert(payload);
-      if (error) {
-        setMsg({ type: 'error', text: 'Gagal menambah barang baru.' });
       } else {
+        const { error } = await supabase.from('products').insert(payload);
+        if (error) throw error;
         setMsg({ type: 'success', text: 'Barang baru berhasil ditambahkan.' });
         setEditing(null);
       }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menyimpan data barang.' });
     }
     setSaving(false);
     loadData();
@@ -135,13 +139,14 @@ export function KelolaKatalog() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus barang ini dari katalog?')) return;
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) {
-      setMsg({ type: 'error', text: 'Gagal menghapus barang.' });
-    } else {
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
       setMsg({ type: 'success', text: 'Barang berhasil dihapus.' });
       loadData();
       setTimeout(() => setMsg(null), 3000);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message ?? 'Gagal menghapus barang.' });
     }
   };
 
