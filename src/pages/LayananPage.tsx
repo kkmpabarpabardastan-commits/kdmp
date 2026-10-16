@@ -23,8 +23,12 @@ export function LayananPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('services').select('*').order('category').order('name');
-      setServices(data ?? []);
+      try {
+        const { data } = await supabase.from('services').select('*').order('category').order('name');
+        setServices(data ?? []);
+      } catch {
+        // Supabase not configured or unreachable
+      }
       setLoading(false);
     })();
   }, []);

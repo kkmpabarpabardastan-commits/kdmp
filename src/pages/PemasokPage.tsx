@@ -10,8 +10,12 @@ export function PemasokPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('suppliers').select('*').order('rating', { ascending: false });
-      setSuppliers(data ?? []);
+      try {
+        const { data } = await supabase.from('suppliers').select('*').order('rating', { ascending: false });
+        setSuppliers(data ?? []);
+      } catch {
+        // Supabase not configured or unreachable
+      }
       setLoading(false);
     })();
   }, []);

@@ -16,29 +16,33 @@ export function BerandaPage({ onNavigate }: { onNavigate: (page: PageId) => void
 
   useEffect(() => {
     (async () => {
-      const [prodRes, memRes, supRes, trxRes, catRes] = await Promise.all([
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('members').select('*', { count: 'exact', head: true }).eq('status', 'aktif'),
-        supabase.from('suppliers').select('*', { count: 'exact', head: true }),
-        supabase.from('transactions').select('*', { count: 'exact', head: true }),
-        supabase.from('categories').select('*').order('name'),
-      ]);
+      try {
+        const [prodRes, memRes, supRes, trxRes, catRes] = await Promise.all([
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+          supabase.from('members').select('*', { count: 'exact', head: true }).eq('status', 'aktif'),
+          supabase.from('suppliers').select('*', { count: 'exact', head: true }),
+          supabase.from('transactions').select('*', { count: 'exact', head: true }),
+          supabase.from('categories').select('*').order('name'),
+        ]);
 
-      setStats({
-        products: prodRes.count ?? 0,
-        members: memRes.count ?? 0,
-        suppliers: supRes.count ?? 0,
-        transactions: trxRes.count ?? 0,
-      });
-      setCategories(catRes.data ?? []);
+        setStats({
+          products: prodRes.count ?? 0,
+          members: memRes.count ?? 0,
+          suppliers: supRes.count ?? 0,
+          transactions: trxRes.count ?? 0,
+        });
+        setCategories(catRes.data ?? []);
 
-      const { data } = await supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(8);
-      setFeatured(data ?? []);
+        const { data } = await supabase
+          .from('products')
+          .select('*, category:categories(*)')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(8);
+        setFeatured(data ?? []);
+      } catch {
+        // Supabase not configured or unreachable — show empty state
+      }
       setLoading(false);
     })();
   }, []);

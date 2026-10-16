@@ -14,8 +14,12 @@ export function AnggotaPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('members').select('*').order('join_date', { ascending: false });
-      setMembers(data ?? []);
+      try {
+        const { data } = await supabase.from('members').select('*').order('join_date', { ascending: false });
+        setMembers(data ?? []);
+      } catch {
+        // Supabase not configured or unreachable
+      }
       setLoading(false);
     })();
   }, []);

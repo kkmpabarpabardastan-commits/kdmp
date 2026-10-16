@@ -18,12 +18,16 @@ export function KatalogPage() {
 
   useEffect(() => {
     (async () => {
-      const [prodRes, catRes] = await Promise.all([
-        supabase.from('products').select('*, category:categories(*), supplier:suppliers(*)').eq('is_active', true).order('name'),
-        supabase.from('categories').select('*').order('name'),
-      ]);
-      setProducts(prodRes.data ?? []);
-      setCategories(catRes.data ?? []);
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          supabase.from('products').select('*, category:categories(*), supplier:suppliers(*)').eq('is_active', true).order('name'),
+          supabase.from('categories').select('*').order('name'),
+        ]);
+        setProducts(prodRes.data ?? []);
+        setCategories(catRes.data ?? []);
+      } catch {
+        // Supabase not configured or unreachable
+      }
       setLoading(false);
     })();
   }, []);

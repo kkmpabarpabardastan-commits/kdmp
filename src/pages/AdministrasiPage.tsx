@@ -50,20 +50,24 @@ export function AdministrasiPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('transactions')
-        .select('*, member:members(*), product:products(*)')
-        .order('transaction_date', { ascending: false })
-        .order('created_at', { ascending: false });
-      setTransactions(data ?? []);
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from('transactions')
+          .select('*, member:members(*), product:products(*)')
+          .order('transaction_date', { ascending: false })
+          .order('created_at', { ascending: false });
+        setTransactions(data ?? []);
 
-      const { data: settingsData } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'admin_password')
-        .maybeSingle();
-      setStoredPassword(settingsData?.value ?? 'kdmp2024');
+        const { data: settingsData } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'admin_password')
+          .maybeSingle();
+        setStoredPassword(settingsData?.value ?? 'kdmp2024');
+      } catch {
+        // Supabase not configured or unreachable
+      }
+      setLoading(false);
     })();
   }, []);
 

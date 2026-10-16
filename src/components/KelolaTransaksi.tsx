@@ -60,14 +60,18 @@ export function KelolaTransaksi() {
   const [syncMsg, setSyncMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    const [trxRes, memRes, prodRes] = await Promise.all([
-      supabase.from('transactions').select('*, member:members(*), product:products(*)').order('transaction_date', { ascending: false }).order('created_at', { ascending: false }),
-      supabase.from('members').select('*').order('name'),
-      supabase.from('products').select('*').order('name'),
-    ]);
-    setTransactions(trxRes.data ?? []);
-    setMembers(memRes.data ?? []);
-    setProducts(prodRes.data ?? []);
+    try {
+      const [trxRes, memRes, prodRes] = await Promise.all([
+        supabase.from('transactions').select('*, member:members(*), product:products(*)').order('transaction_date', { ascending: false }).order('created_at', { ascending: false }),
+        supabase.from('members').select('*').order('name'),
+        supabase.from('products').select('*').order('name'),
+      ]);
+      setTransactions(trxRes.data ?? []);
+      setMembers(memRes.data ?? []);
+      setProducts(prodRes.data ?? []);
+    } catch {
+      // Supabase not configured or unreachable
+    }
     setLoading(false);
   }, []);
 
